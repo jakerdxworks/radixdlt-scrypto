@@ -143,20 +143,18 @@ impl ManifestBuilder {
     }
 
     /// Takes resource from worktop, by amount.
-    pub fn take_from_worktop<F>(
+    pub fn take_from_worktop(
         &mut self,
         resource_address: ResourceAddress,
         amount: Decimal,
-        then: F,
-    ) -> &mut Self
-    where
-        F: FnOnce(&mut Self, ManifestBucket) -> &mut Self,
+    ) -> (&mut Self, ManifestBucket)
     {
         let (builder, bucket_id, _) = self.add_instruction(InstructionV1::TakeFromWorktop {
             amount,
             resource_address,
         });
-        then(builder, bucket_id.unwrap())
+
+        (builder, bucket_id.unwrap())
     }
 
     /// Takes resource from worktop, by non-fungible ids.
@@ -852,11 +850,17 @@ impl ManifestBuilder {
         amount: Decimal,
         resource_address: ResourceAddress,
     ) -> &mut Self {
-        self.take_from_worktop(resource_address, amount, |builder, bucket_id| {
-            builder
-                .add_instruction(InstructionV1::BurnResource { bucket_id })
-                .0
-        })
+        
+        let (manifest_builder, bucket_id) = self.take_from_worktop(resource_address, amount);
+        manifest_builder.add_instruction(InstructionV1::BurnResource { bucket_id });
+
+        // self.take_from_worktop(resource_address, amount, |builder, bucket_id| {
+        //     builder
+        //         .add_instruction(InstructionV1::BurnResource { bucket_id })
+        //         .0
+        // })
+
+        self
     }
 
     pub fn burn_all_from_worktop(&mut self, resource_address: ResourceAddress) -> &mut Self {
