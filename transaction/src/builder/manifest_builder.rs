@@ -147,16 +147,14 @@ impl ManifestBuilder {
         &mut self,
         resource_address: ResourceAddress,
         amount: Decimal,
-        mut bucket_id: ManifestBucket
-    ) -> &mut Self
+    ) -> (&mut Self, ManifestBucket)
     {
-        let bucket_id = self.id_allocator.new_bucket_id().unwrap();
-        self.add_instruction(InstructionV1::TakeFromWorktop {
+        let (builder, bucket_id, _) = self.add_instruction(InstructionV1::TakeFromWorktop {
             amount,
             resource_address,
         });
-
-        self
+        
+        (builder, bucket_id.unwrap())
     }
 
     /// Takes resource from worktop, by non-fungible ids.
@@ -852,8 +850,7 @@ impl ManifestBuilder {
         amount: Decimal,
         resource_address: ResourceAddress,
     ) -> &mut Self {
-        let bucket_id = self.id_allocator.new_bucket_id().unwrap();
-        let manifest_builder = self.take_from_worktop(resource_address, amount, bucket_id);
+        let (manifest_builder, bucket_id) = self.take_from_worktop(resource_address, amount);
         manifest_builder.add_instruction(InstructionV1::BurnResource { bucket_id });
 
         // self.take_from_worktop(resource_address, amount, |builder, bucket_id| {
